@@ -1,0 +1,427 @@
+---
+title: "20/21 Fall RMSC4002 Assignment 1"
+author: "CHAN SZE YUEN SYNGIENE 1155127616"
+output: pdf_document
+---
+The code used in this assignment is written by R.
+
+
+## 1(a)
+
+
+1.
+```{r}
+library(readr)
+stock <- read_csv("C:\\Users\\Chan Sze Yuen\\Documents\\RDATASET\\RMSC4002DATA\\hkse50.csv")
+set.seed(27616)
+#random seed of my last 5 digits of student ID:1155127616
+r <- sample(1:50, size=8)
+#select 5 random integers 
+stock_q1a=stock[r,]
+#Result:1044,144,267,388 and 941
+stock_q1a
+library(tseries)
+stocklist_1a=c("1044.HK","0144.HK","0267.HK","0388.HK",
+               "0941.HK","2319.HK","0494.HK","0151.HK")
+stock_1a=list()
+for (i in 1:8){
+stock_1a[[i]]=get.hist.quote(instrument = stocklist_1a[i],
+start="2018-01-01", end="2020-01-01",quote = c("Close"),
+provider = c("yahoo"), compression = "d",
+retclass = c("zoo"))
+}
+```
+2.
+```{r}
+pmatrix_1a=matrix(c(as.numeric(stock_1b[[i]][,1]),
+                 as.numeric(stock_1b[[2]][,1]),
+                 as.numeric(stock_1b[[3]][,1]),
+                 as.numeric(stock_1b[[4]][,1]),
+                 as.numeric(stock_1b[[5]][,1]),
+                 as.numeric(stock_1b[[6]][,1]),
+                 as.numeric(stock_1b[[7]][,1]),
+                 as.numeric(stock_1b[[8]][,1])),
+                 byrow=F,ncol=8)
+head(pmatrix_1a)
+#matrix of the closing price of eight stock from 2018-01-01 to 2019-12-31
+#also, as the matrix is sucessfully constructed,the length of the different stock vector is same.
+price20191231=pmatrix_1a[492,]
+#vector of closing price of my eight stock
+v0=5000*sum(price20191231)
+#the value of my portfolio based on the closing price of the last day, 31/12/2019
+v0
+```
+3.
+```{r}
+t1=as.ts(pmatrix_1a[,1])
+t2=as.ts(pmatrix_1a[,2])
+t3=as.ts(pmatrix_1a[,3])
+t4=as.ts(pmatrix_1a[,4])
+t5=as.ts(pmatrix_1a[,5])
+t6=as.ts(pmatrix_1a[,6])
+t7=as.ts(pmatrix_1a[,7])
+t8=as.ts(pmatrix_1a[,8])
+u1=(lag(t1)-t1)/t1
+u2=(lag(t2)-t2)/t2
+u3=(lag(t3)-t3)/t3
+u4=(lag(t4)-t4)/t4
+u5=(lag(t5)-t5)/t5
+u6=(lag(t6)-t6)/t6
+u7=(lag(t7)-t7)/t7
+u8=(lag(t8)-t8)/t8
+u=cbind(u1,u2,u3,u4,u5,u6,u7,u8)
+n2=nrow(u) #no. of row in u
+n1=n2-60+1 #60-th obs before n2
+u60=u[n1:n2,]
+set.seed(27616)
+mu=apply(u60,2,mean) #compute column mean of u60
+sigma=var(u60) #compute daily variance rate of u60
+try(chol(sigma))
+#failed due to the semi-positive definite matrix
+C=chol(sigma,pivot=T) #using pivot
+s=cbind(t1,t2,t3,t4,t5,t6,t7,t8)
+s0=s[nrow(s),]
+#vvvvv 1000 looping of simulation vvvvv#
+port.v=rep(0,1000) #to store simulated portfolio
+s1000=matrix(0,1000,ncol=8) #to store the simulated price
+for (i in 1:1000){
+  s0=s[nrow(pmatrix),] #Every simulation starts at the latest price
+for (j in 1:10){# simulate price for future 10 days
+z=rnorm(8) # generate normal random vector
+v=mu+t(C)%*%z # transform to multivariate normal
+s1=s0*(1+v) # new stock price
+s0=s1 #update s0 with s1
+}
+s1000[i,]=s0
+port.v[i]=5000*sum(s0)
+}
+
+```
+
+
+4.
+```{r}
+port.v[1000]-v0 #profit and loss of last simulated result
+#or
+sum(s1000[1000,])*5000-v0 #profit and loss of last simulated result
+```
+5.
+```{r}
+pnl=port.v-v0
+min(pnl)
+max(pnl)
+mean(pnl)
+median(pnl)
+sd(pnl)
+quantile(pnl,0.01)
+quantile(pnl,0.05)
+```
+
+
+## 1(b)
+I choose 3M(MMM), American Express(AXP), Apple(AAPL), JPMorgan Chase(JPM), Coca-Cola(KO), Goldman Sachs(GS), Intel(INTC) and IBM(IBM) as eight of my shocks.
+
+
+1
+```{r}
+stocklist_1b=c("MMM","AXP","AAPL","JPM","KO","GS","INTC","IBM")
+stock_1b=list()
+for (i in 1:8){
+stock_1b[[i]]=get.hist.quote(instrument = stocklist_1b[i],
+start="2018-01-01", end="2020-01-01",quote = c("Adjusted"),
+provider = c("yahoo"), compression = "d",
+retclass = c("zoo"))
+}
+```
+2
+```{r}
+pmatrix_1b=matrix(c(as.numeric(stock_1b[[i]][,1]),
+                 as.numeric(stock_1b[[2]][,1]),
+                 as.numeric(stock_1b[[3]][,1]),
+                 as.numeric(stock_1b[[4]][,1]),
+                 as.numeric(stock_1b[[5]][,1]),
+                 as.numeric(stock_1b[[6]][,1]),
+                 as.numeric(stock_1b[[7]][,1]),
+                 as.numeric(stock_1b[[8]][,1])),
+                 byrow=F,ncol=8)
+#matrix of the closing price of eight stock from 2018-01-01 to 2019-12-31
+#also, as the matrix is sucessfully constructed,the length of the different stock vector is same.
+price20191231_1b=pmatrix_1b[492,]
+#vector of closing price of my eight stock
+v0_1b=5000*sum(price20191231_1b)
+#the value of my portfolio based on the closing price of the last day, 31/12/2019
+v0_1b
+```
+3
+```{r}
+t1_1b=as.ts(pmatrix_1b[,1])
+t2_1b=as.ts(pmatrix_1b[,2])
+t3_1b=as.ts(pmatrix_1b[,3])
+t4_1b=as.ts(pmatrix_1b[,4])
+t5_1b=as.ts(pmatrix_1b[,5])
+t6_1b=as.ts(pmatrix_1b[,6])
+t7_1b=as.ts(pmatrix_1b[,7])
+t8_1b=as.ts(pmatrix_1b[,8])
+u1_1b=(lag(t1_1b)-t1_1b)/t1_1b
+u2_1b=(lag(t2_1b)-t2_1b)/t2_1b
+u3_1b=(lag(t3_1b)-t3_1b)/t3_1b
+u4_1b=(lag(t4_1b)-t4_1b)/t4_1b
+u5_1b=(lag(t5_1b)-t5_1b)/t5_1b
+u6_1b=(lag(t6_1b)-t6_1b)/t6_1b
+u7_1b=(lag(t7_1b)-t7_1b)/t7_1b
+u8_1b=(lag(t8_1b)-t8_1b)/t8_1b
+u_1b=cbind(u1_1b,u2_1b,u3_1b,u4_1b,u5_1b,u6_1b,u7_1b,u8_1b)
+n2_1b=nrow(u_1b) #no. of row in u
+n1_1b=n2_1b-60+1 #60-th obs before n2
+u60_1b=u_1b[(n1_1b):(n2_1b),]
+set.seed(27616)
+mu_1b=apply(u60_1b,2,mean) #compute column mean of u60
+sigma_1b=var(u60_1b) #compute daily variance rate of u60
+try(chol(sigma_1b))
+#failed due to the semi-positive definite matrix
+C_1b=chol(sigma_1b,pivot=T) #using pivot
+s_1b=cbind(t1_1b,t2_1b,t3_1b,t4_1b,t5_1b,t6_1b,t7_1b,t8_1b)
+s0_1b=s_1b[nrow(s_1b),]
+#vvvvv 1000 looping of simulation vvvvv#
+port.v_1b=rep(0,1000) #to store simulated portfolio
+s1000_1b=matrix(0,1000,ncol=8) #to store the simulated price
+for (i in 1:1000){
+  s0_1b=s_1b[nrow(pmatrix_1b),] #Every simulation starts at the latest price
+for (j in 1:10){# simulate price for future 10 days
+z_1b=rnorm(8) # generate normal random vector
+v_1b=mu+t(C_1b)%*%z_1b # transform to multivariate normal
+s1_1b=s0_1b*(1+v_1b) # new stock price
+s0_1b=s1_1b #update s0_1b with s1_1b
+}
+s1000_1b[i,]=s0_1b
+port.v_1b[i]=5000*sum(s0_1b)
+}
+```
+4
+```{r}
+port.v_1b[1000]-v0_1b #profit and loss of last simulated result
+#or
+sum(s1000_1b[1000,])*5000-v0_1b #profit and loss of last simulated result
+```
+5
+```{r}
+pnl_1b=port.v_1b-v0_1b
+min(pnl_1b)
+max(pnl_1b)
+mean(pnl_1b)
+median(pnl_1b)
+sd(pnl_1b)
+quantile(pnl_1b,0.01)
+quantile(pnl_1b,0.05)
+```
+## 2(a)
+
+
+1
+
+
+in this case, we want to minimize:
+$$
+\sum_{i=1}^{n-19}|\sigma_i-s_i|
+$$
+```{r}
+pmatrix=matrix(c(c(as.numeric(stock_num_0151[,1])),
+       c(as.numeric(stock_num_0144[,1])),
+       c(as.numeric(stock_num_0267[,1])),
+       c(as.numeric(stock_num_0388[,1])),
+       c(as.numeric(stock_num_0941[,1])),
+       c(as.numeric(stock_num_2319[,1])),
+       c(as.numeric(stock_num_0494[,1])),
+       c(as.numeric(stock_num_0151[,1]))),
+       ncol=8,byrow=F)
+head(pmatrix)
+t1=as.ts(pmatrix[,1]) # first stock in Q1.(a)
+u1=(lag(t1)-t1)/t1
+msd<-function(t,w) { # function to compute moving s.d.
+n<-length(t)-w+1
+out<-c() # initialize a null vector to store the output
+for (i in 1:n) {
+j<-i+w-1
+s<-sd(window(t,i,j)) # compute the sd of t(i) to t(j)
+out<-append(out,s) # append the result to out
+}
+out<-as.ts(out) # convert to time series
+}
+s1_20<-msd(u1,20)
+#calculate the moving sd of relative change from i=n to i=n+19
+#where n=1,2,...,length of u1
+sigma_i=c() #save the value of sigma
+sigma_i[1]=sd(u1[1:30]) #taking first 30 day return as the inital sd
+  out=c()
+#write a function to calculate the error terms with different lambda
+errfun=function(lambda,x){
+  for (i in 2:(length(x)-19)){
+  sigma_i[i]=sqrt(lambda*sigma_i[i-1]^2+(1-lambda)*(x[i-1])^2)
+  }
+  append(out,sum(abs(sigma_i-s1_20)))
+}
+```
+
+```{r}
+#gen lambda from 0 to 1 with d=0.001 and save it as error vector
+error=c()
+d=0.001
+return=u1
+for (i in seq(d,1,d)){ 
+error=append(error,errfun(i,return))
+}
+#finding which lambda value give the minimum error
+lambda_min=d*which(error==min(error))
+lambda_min
+plot(error~seq(d,1,d),xlab="lambda",type="l")
+
+
+#or using nlminb function
+nlminb(0.4,errfun,x=u1)$par #approximatly 0.985
+```
+Hence,we have lambda=0.985 minimizes the sum of the absolute error terms:
+$$
+\sum_{i=1}^{n-19}|\sigma_i-s_i|
+$$
+2
+
+
+```{r}
+sigma_i=c()
+sigma_i[1]=sd(u1[1:30])
+lambda=lambda_min
+  for (i in 2:(length(u1)-19)){
+  sigma_i[i]=sqrt(lambda*sigma_i[i-1]^2+(1-lambda)*(u1[i-1])^2)
+  }
+ts.plot(sigma_i)
+```
+3
+
+
+```{r}
+errfun(lambda_min,u1) #sum of absolute error if lambda=0.968
+errfun(0.9,u1) #sum of absolute error if lambda=0.9
+#the difference of error with two different lambda
+abs(errfun(lambda_min,u1)-errfun(0.9,u1))
+```
+
+
+## 2(b)
+```{r,results="hide"}
+library(tseries)
+garch11_u1<-garch(u1,order=c(1,1)) #fit the garch(1,1)
+```
+```{r}
+matplot(garch11_u1$fitted.values[,1],type='l') 
+```
+
+## 3
+(a)
+```{r}
+mean(u1)
+median(u1)
+sd(u1)
+```
+(b)
+```{r}
+qqnorm(u1)
+qqline(u1)
+```
+The returns do not look normally distributed as the two tailed are quite differ form the normal quantile line, which is so called the "fat tailed distribution". The reason behind that maybe there is additional risk that may rise the actual loss compared to the loss under normal assumption. Also, higher risk imply higher profit and hence the actual profit is higher than the profit under normal assumption.
+
+
+(c)
+```{r}
+#test whether or not u1 is following normal distribution 
+ks.test(u1,rnorm) 
+#p-value close to 0(p-value<0.05) hence the normality assumption is rejected
+JB.test<-function(u) { # function for JB-test
+n<-length(u) # sample size
+s<-sd(u) # compute sd
+sk<-sum(u^3)/(n*s^3) # compute skewness
+ku<-sum(u^4)/(n*s^4)-3 # excess kurtosis
+JB<-n*(sk^2/6+ku^2/24) # JB test stat
+p<-1-pchisq(JB,2) # p-value
+cat("JB-stat:",JB," p-value:",p,"\n") # output
+}
+JB.test(u1)
+#p-value close to 0(p-value<0.05) hence the normality assumption is rejected
+```
+
+
+(d)
+```{r}
+QQt.plot<-function(u) { # function for QQ-t plot
+su<-sort(u) # sort u
+n<-length(u) # sample size
+s<-sd(u) # sd
+ku<-sum(u^4)/(n*s^4)-3 # excess kurtosis
+v<-round(6/ku+4) # estimate df, round to the nearest integer
+i<-((1:n)-0.5)/n # create a vector of percentile
+q<-qt(i,v) # percentile point from t(v)
+hist(u) # histogram of u
+plot(q,su,main="qq-t plot") # plot(q,su)
+abline(lsfit(q,su)) # add reference line
+v # output degree of freedom
+}
+par(mfrow=(c(1,2)))
+u1_t=QQt.plot(u1)
+#degree of freedom estimated is 10
+qqnorm(u1)
+qqline(u1)
+```
+Clearly, the t distribution with df=10 is more fitted to the return data especially in the two tailed (the line cross most of the dots).Which is because t distribution has fatter tails when df is small(typically <30) compared to the normal distribution.
+
+(e)
+```{r}
+ks.test(u1,pt,df=u1_t)
+```
+from the ks.test above which testing whether or not the return follows t distribution with df=10, and it is rejected as the p-value is still very small, which may imply that normal and t are not doing well in modeling the return as extreme return values are more likely at market downturns, and
+they are all positively skewed, while t-distribution does not. However, the t distribution with df=10 is more fitted to the return data especially in the two tailed (the line cross most of the dots).
+
+## 4
+
+
+(a)
+
+
+ARCH(1)
+
+
+(b)
+
+
+AR(1)
+
+
+(c)
+
+
+0
+
+
+(d)
+
+
+$(0.3)^{h}$
+
+
+(e)
+
+
+$(0.6)^h$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
